@@ -40,6 +40,8 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
                 if (xhr.status==200) {
                     //XXX: parse some JSON from the request!
                     //XXX: Pass the data to the callback!
+                    response = JSON.parse(xhr.response)
+                    callback(response)
                 }
             } 
             catch(e) {
@@ -50,6 +52,10 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
     //XXX: POST to a URL
     //XXX: set the mimetype and the accept headers!
     // Remember to use application/json !
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.send(JSON.stringify(objects));
 }
 
 
@@ -59,10 +65,12 @@ world = {};
 function drawCircle(context,entity) {
     with(context) {
         beginPath();              
-        lineWidth = 3;
+        lineWidth = 1;
         var x = entity["x"];
         var y = entity["y"];
         //moveTo(x,y);
+        var colors = ['#ff0000', '#ffa500', '#ffff00', '#008000', '#0000ff', '#4b0082', '#ee82ee']
+        entity["colour"] = colors[Math.floor(Math.random() * colors.length)];
         fillStyle = entity["colour"];
         strokeStyle = fillStyle;
         arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
@@ -138,6 +146,7 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
+    sendJSONXMLHTTPRequest("/entity/" + entity, data, result => {});
 
 }
 
@@ -263,6 +272,8 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
 function update() {
     //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
     drawFrame();
+    sendJSONXMLHTTPRequest("/world", null, result => {world=result;});
+    drawNextFrame();
 }
 
 // 30 frames per second
